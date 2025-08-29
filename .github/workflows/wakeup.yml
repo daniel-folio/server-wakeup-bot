@@ -1,0 +1,27 @@
+# .github/workflows/wakeup.yml
+
+name: Server Wakeup
+
+on:
+  schedule:
+    # 15분마다 실행 (UTC 기준이므로 한국 시간과는 차이가 있습니다)
+    # cron 표현식: '*/15 * * * *' -> 분 시 일 월 요일
+    - cron: '*/15 * * * *'
+
+jobs:
+  wakeup:
+    runs-on: ubuntu-latest # 실행 환경
+    steps:
+      - name: Checkout repository # 1. 내 코드를 가져옵니다
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js # 2. Node.js 환경을 설정합니다
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # 내 프로젝트와 버전을 맞춰주세요
+
+      - name: Install dependencies # 3. Puppeteer를 포함한 의존성을 설치합니다
+        run: npm install
+
+      - name: Run wakeup script # 4. wakeup.js 스크립트를 실행합니다
+        run: node wakeup.js # 스크립트 경로에 맞게 수정
