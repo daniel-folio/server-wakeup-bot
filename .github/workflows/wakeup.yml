@@ -24,5 +24,8 @@ jobs:
       - name: Install dependencies # 3. Puppeteer를 포함한 의존성을 설치합니다
         run: npm install
 
+      - name: Install Puppeteer Browsers (Chromium) #  크롬(Chromium) 브라우저가 설치.
+        run: npx puppeteer browsers install chrome
+
       - name: Run wakeup script # 4. wakeup.js 스크립트를 실행합니다
         run: node wakeup.js # 스크립트 경로에 맞게 수정
