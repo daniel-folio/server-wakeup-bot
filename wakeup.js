@@ -14,17 +14,17 @@ async function wakeupServer() {
     const page = await browser.newPage();
 
     // 3. 내 서버 URL로 접속합니다.
-    // waitUntil: 'networkidle0' 옵션은 네트워크 활동이 없을 때까지 기다리므로,
-    // 페이지가 완전히 로드되었음을 보장합니다.
-    console.log('서버에 접속을 시도합니다: https://portfolio-be-yslr.onrender.com');
-    await page.goto('https://portfolio-be-yslr.onrender.com', {
-      waitUntil: 'networkidle0',
-    });
+    const targetUrl = 'https://portfolio-be-yslr.onrender.com/git-wakeupbot';
+    console.log(`서버에 접속을 시도합니다: ${targetUrl}`);
+    const response = await page.goto(targetUrl);
 
     // 4. 페이지 타이틀을 가져와서 성공 여부를 확인합니다.
-    const pageTitle = await page.title();
-    console.log(`접속 성공! 페이지 제목: "${pageTitle}"`);
-    console.log('서버가 성공적으로 깨어났습니다.');
+    if (response.ok()) {
+      console.log(`접속 성공! 상태 코드: ${response.status()}`);
+      console.log('서버가 성공적으로 깨어났습니다.');
+    } else {
+      throw new Error(`서버 응답 실패! 상태 코드: ${response.status()}`);
+    }
 
     // 5. 브라우저를 닫습니다.
     await browser.close();
