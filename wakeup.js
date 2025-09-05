@@ -1,6 +1,6 @@
 // wakeup.js
 const puppeteer = require('puppeteer');
-import axios from 'axios';
+const axios = require('axios');
 
 // 1. Wakeup Bot이 호출할 백엔드 서버의 주소
 const WAKEUP_URL = process.env.WAKEUP_URL;
