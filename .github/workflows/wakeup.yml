@@ -29,3 +29,5 @@ jobs:
 
       - name: Run wakeup script # 4. wakeup.js 스크립트를 실행합니다
         run: node wakeup.js # 스크립트 경로에 맞게 수정
+        env: # env 항목을 추가합니다.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
