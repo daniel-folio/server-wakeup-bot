@@ -9,23 +9,19 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # 1. B 저장소의 코드를 체크아웃합니다. (별도 토큰 불필요)
+      # 1. B 저장소의 코드를 가져옵니다.
       - name: Checkout B Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # 2. A 저장소로 코드를 푸시(배포)합니다.
-      - name: Push to A Repository
-        uses: peaceiris/actions-gh-pages@v4
+      # 2. B 저장소의 Secret에 저장된 개인키를 Actions 실행기에 설치합니다.
+      - name: Install SSH Key for A Repository
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          # A 저장소의 쓰기 권한이 있는 배포 키 (Secret 이름)
-          deploy_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
-          # 코드를 보낼 A 저장소의 주소
-          external_repository: daniel-works0001/server-wakeup-bot
-          # A 저장소의 main 브랜치로 보냄
-          publish_branch: main
-          # 현재 폴더의 모든 내용을 보냄
-          publish_dir: .
-          # 히스토리를 강제로 덮어씀
-          force_orphan: true
+          ssh-private-key: ${{ secrets.A_REPO_DEPLOY_KEY }}
+
+      # 3. Git의 mirror 기능을 이용해 A 저장소로 푸시합니다.
+      - name: Mirror to A Repository
+        run: |
+          git push git@github.com:daniel-works0001/server-wakeup-bot.git --mirror
