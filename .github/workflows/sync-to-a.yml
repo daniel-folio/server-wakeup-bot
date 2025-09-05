@@ -9,6 +9,12 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout B Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          
       - name: Mirror to A Repository
         uses: wearerequired/git-mirror-action@v1
         with:
