@@ -5,44 +5,22 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-  
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout B Repository (Source)
+      # B 저장소의 코드를 체크아웃합니다 (별도 토큰 불필요)
+      - name: Checkout B Repository
         uses: actions/checkout@v4
         with:
-          path: B_Repo
+          fetch-depth: 0
 
-      - name: Checkout A Repository (Destination)
-        uses: actions/checkout@v4
+      # A 저장소의 SSH 키(deploy_key)를 이용해 A 저장소로 코드를 배포(덮어쓰기)합니다
+      - name: Push to A Repository
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          repository: daniel-works0001/server-wakeup-bot
-          # A 저장소 Checkout에는 PAT를 그대로 사용합니다.
-          token: ${{ secrets.A_REPO_PAT }}
-          path: A_Repo
-
-      - name: Sync files from B to A (exclude workflows)
-        run: |
-          rsync -av --delete --exclude='.github/' B_Repo/ A_Repo/
-
-      - name: Install SSH Key for Push
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.A_REPO_DEPLOY_KEY }}
-
-      - name: Commit and Push to A Repository
-        run: |
-          cd A_Repo
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          if ! git diff --staged --quiet; then
-            git commit -m "Sync code from B repository (${{ github.sha }})"
-            # SSH 주소 형식으로 push 합니다.
-            git push git@github.com:daniel-works0001/server-wakeup-bot.git main
-          else
-            echo "No changes to sync."
-          fi
+          deploy_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
+          external_repository: daniel-works0001/server-wakeup-bot
+          publish_branch: main
+          publish_dir: .
+          force_orphan: true
