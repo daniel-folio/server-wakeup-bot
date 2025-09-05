@@ -66,7 +66,11 @@ Render의 **무료(Free) 플랜**은 다음과 같은 특징 때문에 실제 �
 -   **2-1.** GitHub에서 `server-wakeup-bot`과 같은 이름으로 새 저장소를 생성합니다.
 -   **2-2.** 생성된 저장소의 `Settings` > `Secrets and variables` > `Actions` 메뉴로 이동합니다.
 -   **2-3.** `New repository secret` 버튼을 클릭합니다.
--   **2-4.** **Name**에는 `SLACK_WEBHOOK_URL`을, **Secret**에는 1단계에서 복사한 **실제 Webhook URL**을 붙여넣고 `Add secret`을 클릭하여 저장합니다.
+-   **2-4.** **Name**에는 `SLACK_WEBHOOK_URL`을, **Secret**에는 1단계에서 복사한 **실제 Webhook URL**을 
+붙여넣고 `Add secret`을 클릭하여 저장합니다.
+-   **2-5.** `New repository secret` 버튼을 클릭합니다.
+-   **2-6.** **Name**에는 `WAKEUP_URL`을, **Secret**에는 깨우고 싶은 **Render 서버 주소**를 붙여넣고 `Add secret`을 클릭하여 저장합니다.
+
 
 ### 3단계: 프로젝트 파일 준비
 
@@ -94,7 +98,7 @@ Render의 **무료(Free) 플랜**은 다음과 같은 특징 때문에 실제 �
     const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
     
     // 깨우고 싶은 백엔드 서버의 주소를 입력합니다.
-    const WAKEUP_URL = '[https://portfolio-be-yslr.onrender.com/git-wakeupbot](https://portfolio-be-yslr.onrender.com/git-wakeupbot)';
+    const WAKEUP_URL = process.env.WAKEUP_URL;
     
     async function wakeupServer() {
       console.log('✅ 서버 깨우기 작업을 시작합니다...');
@@ -135,7 +139,7 @@ Render의 **무료(Free) 플랜**은 다음과 같은 특징 때문에 실제 �
     
     wakeupServer();
     ```
-    > **⚠️ 중요**: 위 코드에서 `targetUrl` 변수의 값을 **자신의 Render 서버 주소**와 **전용 헬스 체크 경로**로 반드시 변경해야 합니다.
+    > **⚠️ 중요**: 이 스크립트가 올바르게 작동하려면, **2단계**에서 설명한 대로 GitHub 저장소 Secrets에 **`SLACK_WEBHOOK_URL`**과 **`WAKEUP_URL`**을 반드시 설정해야 합니다.
 
 -   **3-4. 📝 백엔드 서버에 전용 경로 설정 (Strapi 기준)**:
     `wakeup.js`가 호출할 전용 경로들을 백엔드 서버에 만들어주어야 합니다. Strapi 프로젝트의 `src/index.ts` 파일 내 `bootstrap` 함수 안에 아래 코드를 추가합니다.
@@ -219,6 +223,8 @@ GitHub가 정해진 시간에 이 스크립트를 실행하도록 스케줄을 �
             run: node wakeup.js
             env:
               SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+              WAKEUP_URL: ${{ secrets.WAKEUP_URL }}
+    
     ```
 
 ### 5단계: GitHub에 업로드하여 활성화

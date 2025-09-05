@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 import axios from 'axios';
 
 // 1. Wakeup Bot이 호출할 백엔드 서버의 주소
-const WAKEUP_URL = 'https://portfolio-be-yslr.onrender.com/git-wakeupbot';
+const WAKEUP_URL = process.env.WAKEUP_URL;
 // 2. Slack에 알림을 보낼 Webhook URL (반드시 본인 값으로 변경)
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
 
