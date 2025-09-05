@@ -6,21 +6,26 @@ on:
       - main # main 브랜치에 푸시될 때만 실행
 
 jobs:
-  mirror:
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout B Repository
-        uses: actions/checkout@v3
+      - name: Checkout Repo
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          persist-credentials: false
-          
-      - name: Set git safe directory
-        run: git config --global --add safe.directory /github/workspace
+          # B 저장소의 코드를 가져옵니다.
+          repository: 'daniel-folioserver-wakeup-bot'
+          token: ${{ secrets.B_REPO_PAT }}
 
-      - name: Mirror to A Repository
-        uses: wearerequired/git-mirror-action@v1
+      - name: Push to B Repo # (이 액션 이름은 Push to A Repo로 바꾸셔도 됩니다)
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          source_repo: "git@github.com:daniel-folio/server-wakeup-bot.git"
-          destination_repo: "git@github.com:daniel-works0001/server-wakeup-bot.git"
-          ssh_private_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
+          # A 저장소의 쓰기 권한이 있는 배포 키
+          deploy_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
+          # 코드를 보낼 A 저장소의 주소
+          external_repository: daniel-works0001/server-wakeup-bot
+          # A 저장소의 main 브랜치로 보냄
+          publish_branch: main
+          # 현재 폴더의 모든 내용을 보냄
+          publish_dir: .
+          # 히스토리를 강제로 덮어씀
+          force_orphan: true
