@@ -13,7 +13,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           # B 저장소의 코드를 가져옵니다.
-          repository: 'daniel-folio-wakeup-bot'
+          repository: 'daniel-folio/server-wakeup-bot'
           token: ${{ secrets.B_REPO_PAT }}
 
       - name: Push to B Repo # (이 액션 이름은 Push to A Repo로 바꾸셔도 됩니다)
