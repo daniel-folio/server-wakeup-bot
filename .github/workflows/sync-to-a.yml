@@ -9,17 +9,17 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      # 1. B 저장소의 코드를 체크아웃합니다. (별도 토큰 불필요)
+      - name: Checkout B Repository
         uses: actions/checkout@v4
         with:
-          # B 저장소의 코드를 가져옵니다.
-          repository: 'daniel-folio/server-wakeup-bot'
-          token: ${{ secrets.B_REPO_PAT }}
+          fetch-depth: 0
 
-      - name: Push to B Repo # (이 액션 이름은 Push to A Repo로 바꾸셔도 됩니다)
+      # 2. A 저장소로 코드를 푸시(배포)합니다.
+      - name: Push to A Repository
         uses: peaceiris/actions-gh-pages@v4
         with:
-          # A 저장소의 쓰기 권한이 있는 배포 키
+          # A 저장소의 쓰기 권한이 있는 배포 키 (Secret 이름)
           deploy_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
           # 코드를 보낼 A 저장소의 주소
           external_repository: daniel-works0001/server-wakeup-bot
