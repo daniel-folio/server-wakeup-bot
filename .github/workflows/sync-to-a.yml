@@ -9,23 +9,22 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # B 저장소의 코드를 체크아웃합니다 (별도 토큰 불필요)
       - name: Checkout B Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # A 저장소의 SSH 키(deploy_key)를 이용해 A 저장소로 코드를 배포(덮어쓰기)합니다
-      - name: Push to A Repository
+      - name: Push to A Repository using PAT
         uses: peaceiris/actions-gh-pages@v4
         with:
-           # A 저장소의 쓰기 권한이 있는 배포 키
-          deploy_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
+          # SSH Deploy Key 대신 PAT를 사용합니다.
+          personal_token: ${{ secrets.A_REPO_PAT }}
           # 코드를 보낼 A 저장소의 주소
           external_repository: daniel-works0001/server-wakeup-bot
           # A 저장소의 main 브랜치로 보냄
           publish_branch: main
-          # 현재 폴더의 모든 내용을 보냄
           publish_dir: .
-          # 히스토리를 강제로 덮어씀
           force_orphan: true
+          # 커밋 작성자 정보를 명확히 지정
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
