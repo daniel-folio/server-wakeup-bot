@@ -12,6 +12,6 @@ jobs:
       - name: Mirror to A Repository
         uses: wearerequired/git-mirror-action@v1
         with:
-          source_repo: "git@github.com:daniel-polio/server-wakeup-bot.git"
+          source_repo: "git@github.com:daniel-folio/server-wakeup-bot.git"
           destination_repo: "git@github.com:daniel-works0001/server-wakeup-bot.git"
           ssh_private_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
