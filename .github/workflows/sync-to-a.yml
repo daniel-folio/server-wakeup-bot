@@ -9,21 +9,9 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout B Repository
-        uses: actions/checkout@v3
+      - name: Mirror to A Repository
+        uses: wearerequired/git-mirror-action@v1
         with:
-          fetch-depth: 0
-
-      - name: Allow RSA Host Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "HostkeyAlgorithms +ssh-rsa" >> ~/.ssh/config
-          echo "PubkeyAcceptedAlgorithms +ssh-rsa" >> ~/.ssh/config
-
-      - name: Push to A Repository
-        uses: pixta-dev/repository-mirroring-action@v1
-        with:
-          target_repo_url:
-            git@github.com:daniel-works0001/server-wakeup-bot.git
-          ssh_private_key:
-            ${{ secrets.A_REPO_DEPLOY_KEY }}
+          source_repo: "git@github.com:daniel-polio/server-wakeup-bot.git"
+          destination_repo: "git@github.com:daniel-works0001/server-wakeup-bot.git"
+          ssh_private_key: ${{ secrets.A_REPO_DEPLOY_KEY }}
