@@ -3,25 +3,40 @@ name: Sync to A Repository
 on:
   push:
     branches:
-      - main # main 브랜치에 푸시될 때만 실행
+      - main
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # 1. B 저장소의 코드를 가져옵니다.
-      - name: Checkout B Repository
+      # 1. B 저장소(원본)의 코드를 'B_Repo' 폴더에 다운로드합니다.
+      - name: Checkout B Repository (Source)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          path: B_Repo
 
-      # 2. B 저장소의 Secret에 저장된 개인키를 Actions 실행기에 설치합니다.
-      - name: Install SSH Key for A Repository
-        uses: webfactory/ssh-agent@v0.9.0
+      # 2. A 저장소(대상)의 코드를 'A_Repo' 폴더에 다운로드합니다.
+      - name: Checkout A Repository (Destination)
+        uses: actions/checkout@v4
         with:
-          ssh-private-key: ${{ secrets.A_REPO_DEPLOY_KEY }}
+          repository: daniel-works0001/server-wakeup-bot
+          token: ${{ secrets.A_REPO_PAT }} # A 저장소에 접근하기 위한 토큰
+          path: A_Repo
 
-      # 3. Git의 mirror 기능을 이용해 A 저장소로 푸시합니다.
-      - name: Mirror to A Repository
+      # 3. B폴더의 내용을 A폴더로 복사합니다. (.github 폴더는 제외)
+      - name: Sync files from B to A (exclude workflows)
         run: |
-          git push git@github.com:daniel-works0001/server-wakeup-bot.git --mirror
+          rsync -av --delete --exclude='.github/' B_Repo/ A_Repo/
+
+      # 4. 변경된 내용을 A 저장소에 명확한 커밋 메시지와 함께 푸시합니다.
+      - name: Commit and Push to A Repository
+        run: |
+          cd A_Repo
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          if ! git diff --staged --quiet; then
+            git commit -m "Deploy from B repository (${{ github.sha }})"
+            git push
+          else
+            echo "No changes to sync."
+          fi
