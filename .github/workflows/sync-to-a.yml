@@ -15,6 +15,9 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
           
+      - name: Set git safe directory
+        run: git config --global --add safe.directory /github/workspace
+
       - name: Mirror to A Repository
         uses: wearerequired/git-mirror-action@v1
         with:
