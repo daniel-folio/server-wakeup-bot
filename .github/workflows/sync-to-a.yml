@@ -27,4 +27,4 @@ jobs:
           force_orphan: true
           # 커밋 작성자 정보를 명확히 지정
           user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+          user_email: 'github-actions[bot]@users.noreply.github.com' 
