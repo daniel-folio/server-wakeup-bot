@@ -22,13 +22,17 @@ jobs:
             --exclude '.github/workflows/sync-to-a.yml' \
             ./ publish/
 
-      - name: Push to A using gh-pages action (PAT)
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          personal_token: ${{ secrets.A_REPO_PAT }}
-          external_repository: daniel-works0001/server-wakeup-bot
-          publish_branch: main
-          publish_dir: publish
-          force_orphan: true
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+      - name: Commit and push to A/main using PAT (plain git)
+        env:
+          A_REPO_PAT: ${{ secrets.A_REPO_PAT }}
+          A_REPO_OWNER: daniel-works0001
+        run: |
+          cd publish
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "deploy(sync): mirror from B @ $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git branch -M main
+          git remote add origin https://${A_REPO_OWNER}:${A_REPO_PAT}@github.com/daniel-works0001/server-wakeup-bot.git
+          git push -u origin main --force
