@@ -33,3 +33,4 @@ jobs:
         env: # env 항목을 추가합니다.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           WAKEUP_URL: ${{ secrets.WAKEUP_URL }} 
+          SERVER_ROLE: ${{ vars.SERVER_ROLE }}

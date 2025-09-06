@@ -248,3 +248,144 @@ GitHub가 정해진 시간에 이 스크립트를 실행하도록 스케줄을 �
 2.  왼쪽에서 **`Server Wakeup`** 워크플로우를 선택합니다.
 3.  오른쪽에 나타나는 **`Run workflow`** 버튼을 클릭하여 즉시 테스트를 실행합니다.
 4.  작업이 성공하면 **초록색 체크(✅)** 아이콘이 표시됩니다. 작업 이름을 클릭하면 실행 로그를 확인할 수 있습니다.
+
+---
+
+## 🧭 운영 가이드 (A/B 동기화, 스케줄 스위치, 진단)
+
+### A/B 저장소 동기화 구조
+
+- B 저장소에서 커밋(push)하면 `.github/workflows/sync-to-a.yml`이 실행되어 A 저장소로 동기화합니다.
+- 동기화 방식: rsync로 `publish/` 디렉터리를 만든 후, `sync-to-a.yml` 파일만 제외하고 나머지 전체를 포함해 A 저장소 `main`으로 일반 git push 합니다.
+- 필수 전제: B 저장소에 Classic PAT 시크릿이 있어야 합니다.
+  - 이름: `A_REPO_PAT`
+  - 권한(scope): `repo` (필수). 필요하면 `workflow`도 추가 가능
+- A 저장소에는 동기화 대상으로 `wakeup.yml`만 존재하도록 설계되어 있습니다. `sync-to-a.yml`은 A에 포함되지 않습니다.
+
+### 필요한 Secrets / Variables 정리
+
+- 공통(해당 저장소에 등록)
+  - Secrets
+    - `SLACK_WEBHOOK_URL`: Slack Incoming Webhook URL
+    - `WAKEUP_URL`: 깨울 Render 서버 URL
+  - Variables
+    - `SERVER_ROLE`: 메시지 구분용 라벨. 예) A(운영)=`Prod Svr`, B(백업)=`Backup Svr`
+    - `ENABLE_AUTOMATIC_WAKEUP`: 스케줄 on/off 스위치. `'true'`일 때만 스케줄이 동작
+
+> Repository variables 위치: Settings → Secrets and variables → Actions → Variables
+
+### wakeup 스케줄 스위치 방식
+
+- 워크플로 파일: `/.github/workflows/wakeup.yml`
+- 트리거
+  - 수동 실행: `workflow_dispatch` (항상 가능)
+  - 스케줄 실행: `*/10 * * * *` (10분 마다, UTC 기준)
+- 조건문
+  - `if: github.event_name == 'workflow_dispatch' || vars.ENABLE_AUTOMATIC_WAKEUP == 'true'`
+  - 즉, 스케줄은 `ENABLE_AUTOMATIC_WAKEUP` 값이 정확히 `'true'`일 때만 실행됩니다.
+
+### Slack 메시지에 역할/진단 포함
+
+- `wakeup.js`는 다음 정보를 Slack으로 전송합니다.
+  - 역할 라벨: `SERVER_ROLE` (예: `[Prod Svr]`, `[Backup Svr]`)
+  - 시간(ISO), WAKEUP_URL, GitHub 실행 URL(있는 경우), 오류 메시지/HTTP 상태
+- 설정 방법
+  - `wakeup.yml`의 실행 스텝 env에 이미 `SERVER_ROLE: ${{ vars.SERVER_ROLE }}`가 설정됨
+
+### 장애/오류 트러블슈팅 팁
+
+- 스케줄이 가끔 안 보이는 경우
+  - GitHub Actions 스케줄은 정확한 분 보장이 없고 몇 분 지연/skip될 수 있음
+  - 워크플로파일을 처음 추가/수정 직후 첫 스케줄 반영이 늦어질 수 있음
+  - `ENABLE_AUTOMATIC_WAKEUP` 값이 소문자 `'true'`인지 확인 (대소문자/공백 주의)
+  - 저장소 Settings → Actions 정책이 실행을 제한하지 않는지 확인
+
+- HTTP 오류 코드 확인법
+  - Actions 로그의 `Run wakeup script` 단계에서 상태 코드(예: 503)를 확인할 수 있습니다.
+  - Slack 알림에도 마지막 오류 메시지(예: `HTTP 503`)와 실행 URL이 포함됩니다.
+
+- A에 워크플로가 처음 동기화된 직후
+  - GitHub 정책상 “워크플로 파일을 처음 포함한 커밋”에서는 자동 실행되지 않고, 그 다음 푸시부터 실행됩니다.
+
+### 운영 체크리스트 (요약)
+
+1. B 저장소에 `A_REPO_PAT`(Classic PAT, `repo` 권한) 등록 완료
+2. 각 저장소에 `SLACK_WEBHOOK_URL`, `WAKEUP_URL` Secrets 등록
+3. 각 저장소에 `SERVER_ROLE`, 필요 시 `ENABLE_AUTOMATIC_WAKEUP` 변수 등록
+4. B에서 커밋 → `Sync to A Repository` 성공 → A의 `wakeup.yml` 존재 확인
+5. 스케줄이 필요하면 A의 `ENABLE_AUTOMATIC_WAKEUP`를 `'true'`로 설정
+
+---
+
+## 🧩 GitHub 설정 절차 (처음 보는 사람도 따라하기)
+
+아래는 A/B 저장소 각각에 대해 Secrets, Variables, PAT를 어디에서 어떻게 설정하는지 클릭 순서대로 안내합니다.
+
+### 1) A/B 저장소 구분
+
+- A(운영) 저장소 예: `daniel-works0001/server-wakeup-bot`
+- B(백업/커밋 원본) 저장소 예: `daniel-folio/server-wakeup-bot`
+
+이 프로젝트는 B에서 커밋이 발생하면 B의 액션이 실행되어 A로 동기화하도록 설계되어 있습니다.
+
+### 2) B 저장소에 Secrets 등록 (필수)
+
+경로: `B 저장소 → Settings → Secrets and variables → Actions → Secrets`
+
+등록 목록
+
+1. `SLACK_WEBHOOK_URL`
+   - 값: Slack Incoming Webhook URL (`https://hooks.slack.com/...`)
+   - 발급: Slack → Apps → Incoming Webhooks → 채널 연결 → URL 복사
+2. `WAKEUP_URL`
+   - 값: 깨울 대상 서버의 URL (예: `https://<your-render>.onrender.com/git-wakeupbot`)
+3. `A_REPO_PAT`
+   - 값: Classic Personal Access Token
+   - 권한(scope): `repo` (필수). 필요 시 `workflow`도 함께 체크 가능
+   - 생성: GitHub 우상단 프로필 → `Settings` → `Developer settings` → `Personal access tokens (classic)` → `Generate new token (classic)`
+   - 주의: 생성 직후 한 번만 전체 토큰이 보입니다. 바로 복사하여 B 저장소 Secrets에 저장하세요.
+
+### 3) A/B 저장소에 Variables 등록 (권장)
+
+경로: `해당 저장소 → Settings → Secrets and variables → Actions → Variables`
+
+권장 값
+
+- `ENABLE_AUTOMATIC_WAKEUP`
+  - A(운영): `true` (스케줄 켜기)
+  - B(백업): 비우거나 `false` (스케줄 끄기)
+- `SERVER_ROLE`
+  - A(운영): `Prod Svr` (또는 `prod` 등 명확한 라벨)
+  - B(백업): `Backup Svr`
+
+주의 사항
+
+- `ENABLE_AUTOMATIC_WAKEUP`는 문자열 비교이므로 반드시 소문자 `'true'`여야 스케줄이 동작합니다.
+- Variables는 비밀이 아닌 구성 값, Secrets는 민감 정보(URL, 토큰 등) 저장용입니다.
+
+### 4) 워크플로 파일에서 변수 전달 확인
+
+파일: `/.github/workflows/wakeup.yml` → `Run wakeup script` 스텝의 `env`
+
+```yaml
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  WAKEUP_URL: ${{ secrets.WAKEUP_URL }}
+  SERVER_ROLE: ${{ vars.SERVER_ROLE }}
+```
+
+### 5) 동기화 워크플로(B → A) 동작 확인
+
+파일: `/.github/workflows/sync-to-a.yml`
+
+- B에서 커밋 → 액션 실행 → rsync로 `publish/` 생성 (`sync-to-a.yml`만 제외) → plain git push로 A/main에 반영
+- 테스트 절차
+  1. B에서 `README.md`에 공백 한 줄 추가 후 커밋/푸시
+  2. B의 Actions에서 `Sync to A Repository`가 성공했는지 확인
+  3. A의 Code 탭에서 변경 파일과 `/.github/workflows/wakeup.yml` 존재 확인
+  4. A의 Actions에서 `Server Wakeup`을 수동 실행하거나 스케줄 동작 확인
+
+### 6) Render 자동 배포 연결(선택)
+
+- A 저장소가 Render에 연결되어 있고 브랜치 트리거가 `main`이라면, B의 커밋 → A 반영 시 Render에서 자동 빌드/배포가 실행됩니다.
+- Render 대시보드에서 연결 브랜치/빌드 명령을 확인하세요.
