@@ -14,17 +14,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Push to A Repository using PAT
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          # SSH Deploy Key 대신 PAT를 사용합니다.
-          personal_token: ${{ secrets.A_REPO_PAT }}
-          # 코드를 보낼 A 저장소의 주소
-          external_repository: daniel-works0001/server-wakeup-bot
-          # A 저장소의 main 브랜치로 보냄
-          publish_branch: main
-          publish_dir: .
-          force_orphan: true
-          # 커밋 작성자 정보를 명확히 지정
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com' 
+      - name: Prepare publish directory (exclude internal sync workflow)
+        run: |
+          mkdir -p publish
+          rsync -av --delete \
+            --exclude '.git' \
+            --exclude '.github/workflows/sync-to-a.yml' \
+            ./ publish/
+
+      - name: Commit and push to A/main using PAT
+        env:
+          A_REPO_PAT: ${{ secrets.A_REPO_PAT }}
+        run: |
+          cd publish
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "deploy(sync): mirror from B @ $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git branch -M main
+          git remote add origin https://x-access-token:${A_REPO_PAT}@github.com/daniel-works0001/server-wakeup-bot.git
+          # 브랜치 보호 규칙이 없다고 하셔서 --force 사용. 필요시 --force-with-lease로 교체 가능
+          git push -u origin main --force
