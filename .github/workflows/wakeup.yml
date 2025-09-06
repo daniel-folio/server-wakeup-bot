@@ -3,7 +3,10 @@
 name: Server Wakeup
 
 on:
-  workflow_dispatch: #"Run workflow" 버튼을 만들어주는 간단한 설정
+  workflow_dispatch: # 수동 실행
+  push: # B에서 A로 동기화된 커밋에 반응
+    branches:
+      - main
   schedule:
     # 10분마다 실행 (UTC 기준이므로 한국 시간과는 차이가 있습니다)
     # cron 표현식: '*/10 * * * *' -> 분 시 일 월 요일
@@ -11,7 +14,6 @@ on:
 
 jobs:
   wakeup:
-    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_AUTOMATIC_WAKEUP == 'true'
     runs-on: ubuntu-latest # 실행 환경
     steps:
       - name: Checkout repository # 1. 내 코드를 가져옵니다

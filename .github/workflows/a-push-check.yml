@@ -1,0 +1,22 @@
+name: A Repo Push Check
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-on-a-only:
+    if: github.repository == 'daniel-works0001/server-wakeup-bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log context
+        run: |
+          echo "Repo: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Done
+        run: echo "Push detected on A. Workflow running successfully."

@@ -25,6 +25,7 @@ jobs:
       - name: Commit and push to A/main using PAT
         env:
           A_REPO_PAT: ${{ secrets.A_REPO_PAT }}
+          A_REPO_OWNER: daniel-works0001
         run: |
           cd publish
           git init
@@ -33,6 +34,21 @@ jobs:
           git add -A
           git commit -m "deploy(sync): mirror from B @ $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           git branch -M main
-          git remote add origin https://x-access-token:${A_REPO_PAT}@github.com/daniel-works0001/server-wakeup-bot.git
-          # 브랜치 보호 규칙이 없다고 하셔서 --force 사용. 필요시 --force-with-lease로 교체 가능
-          git push -u origin main --force
+          git remote add origin https://${A_REPO_OWNER}:${A_REPO_PAT}@github.com/daniel-works0001/server-wakeup-bot.git
+          # 더 안전한 강제 업데이트: --force-with-lease
+          git push -u origin main --force-with-lease
+
+      - name: Trigger A's wakeup workflow via API (fallback)
+        env:
+          A_REPO_PAT: ${{ secrets.A_REPO_PAT }}
+        run: |
+          set -e
+          RESP=$(curl -s -o /tmp/resp.txt -w "%{http_code}" -L -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${A_REPO_PAT}" \
+            https://api.github.com/repos/daniel-works0001/server-wakeup-bot/actions/workflows/wakeup.yml/dispatches \
+            -d '{"ref":"main"}')
+          echo "Dispatch HTTP status: ${RESP}"
+          echo "Response body:"
+          cat /tmp/resp.txt || true
+          test "${RESP}" = "204"
