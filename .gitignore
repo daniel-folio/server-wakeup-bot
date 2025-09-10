@@ -10,3 +10,6 @@ yarn-error.log*
 
 # Misc
 .DS_Store
+
+# Local test
+slack-test.yml
