@@ -23,16 +23,22 @@ jobs:
             ./ publish/
 
       - name: Commit and push to A/main using PAT (plain git)
-        env:
-          A_REPO_PAT: ${{ secrets.A_REPO_PAT }}
-          A_REPO_OWNER: daniel-works0001
         run: |
           cd publish
           git init
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "daniel-works0001"
+          git config user.email "daniel.han.works0001@gmail.com"
           git add -A
           git commit -m "deploy(sync): mirror from B @ $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           git branch -M main
-          git remote add origin https://${A_REPO_OWNER}:${A_REPO_PAT}@github.com/daniel-works0001/server-wakeup-bot.git
+          git remote add origin https://${{ secrets.WORKS0001_REPO_PAT }}@github.com/daniel-works0001/server-wakeup-bot.git
           git push -u origin main --force
+
+      - name: Commit and push to daniel-dataflow using PAT
+        run: |
+          cd publish
+          git config user.name "daniel-dataflow"
+          git config user.email "daniel.dataflow@gmail.com"
+          git commit --amend --reset-author --no-edit
+          git remote add dataflow https://${{ secrets.DATAFLOW_REPO_PAT }}@github.com/daniel-dataflow/server-wakeup-bot.git
+          git push -u dataflow main --force
